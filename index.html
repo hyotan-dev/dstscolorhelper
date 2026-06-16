@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DSTS Color Helper</title>
+
+<style>
+body{
+    font-family:Arial,sans-serif;
+    margin:30px;
+    background:#f5f5f5;
+}
+
+.section{
+    background:white;
+    padding:20px;
+    margin-bottom:20px;
+    border-radius:10px;
+    box-shadow:0 0 5px rgba(0,0,0,0.15);
+}
+
+h2{
+    margin-top:0;
+}
+
+.row{
+    margin:8px 0;
+}
+
+label{
+    display:inline-block;
+    width:70px;
+}
+
+input[type=number]{
+    width:100px;
+}
+
+#preview1,#preview2{
+    width:80px;
+    height:80px;
+    border:1px solid black;
+    display:inline-block;
+    vertical-align:middle;
+    margin-left:20px;
+}
+</style>
+
+</head>
+<body>
+
+<div class="section">
+
+<h2>RGB (0-1) → RGB (0-255)</h2>
+
+<div class="row">
+<label>R</label>
+<input id="inR" type="number" step="any" value="1">
+</div>
+
+<div class="row">
+<label>G</label>
+<input id="inG" type="number" step="any" value="0.95">
+</div>
+
+<div class="row">
+<label>B</label>
+<input id="inB" type="number" step="any" value="0">
+</div>
+
+<br>
+
+<table>
+
+<tr>
+<td>R:</td>
+<td id="outR"></td>
+</tr>
+
+<tr>
+<td>G:</td>
+<td id="outG"></td>
+</tr>
+
+<tr>
+<td>B:</td>
+<td id="outB"></td>
+</tr>
+
+</table>
+
+<div id="preview1"></div>
+
+<h3>32-bit Float Hex</h3>
+
+<div id="hex1"></div>
+
+</div>
+
+
+
+
+
+<div class="section">
+
+<h2>RGB (0-255) → RGB (0-1)</h2>
+
+<div class="row">
+<label>R</label>
+<input id="rgbR" type="number" value="255">
+</div>
+
+<div class="row">
+<label>G</label>
+<input id="rgbG" type="number" value="242">
+</div>
+
+<div class="row">
+<label>B</label>
+<input id="rgbB" type="number" value="0">
+</div>
+
+<div class="row">
+<label>Max value</label>
+<input id="maxValue" type="number" step="any" value="1">
+</div>
+
+<div class="row">
+<label>Picker</label>
+<input id="picker" type="color" value="#fff200">
+</div>
+
+<br>
+
+<table>
+
+<tr>
+<td>R:</td>
+<td id="valR"></td>
+</tr>
+
+<tr>
+<td>G:</td>
+<td id="valG"></td>
+</tr>
+
+<tr>
+<td>B:</td>
+<td id="valB"></td>
+</tr>
+
+</table>
+
+<div id="preview2"></div>
+
+<h3>32-bit Float Hex</h3>
+
+<div id="hex2"></div>
+
+</div>
+
+<script>
+
+function floatToHex(f){
+
+    let buffer=new ArrayBuffer(4);
+    let view=new DataView(buffer);
+
+    view.setFloat32(0,f,true);
+
+    let s="";
+
+    for(let i=0;i<4;i++){
+
+        let h=view.getUint8(i).toString(16).toUpperCase();
+
+        if(h.length<2) h="0"+h;
+
+        s+=h+" ";
+    }
+
+    return s.trim();
+
+}
+
+function updateForward(){
+
+    let r=parseFloat(inR.value)||0;
+    let g=parseFloat(inG.value)||0;
+    let b=parseFloat(inB.value)||0;
+
+    let max=Math.max(r,g,b);
+
+    let scale;
+
+    if(max<=1)
+        scale=255;
+    else
+        scale=255/max;
+
+    let R=Math.floor(r*scale);
+    let G=Math.floor(g*scale);
+    let B=Math.floor(b*scale);
+
+    outR.textContent=R;
+    outG.textContent=G;
+    outB.textContent=B;
+
+    preview1.style.backgroundColor=
+        `rgb(${R},${G},${B})`;
+
+    hex1.textContent=
+        floatToHex(r)+"   "+
+        floatToHex(g)+"   "+
+        floatToHex(b);
+
+}
+
+function updateReverse(){
+
+    let R=parseFloat(rgbR.value)||0;
+    let G=parseFloat(rgbG.value)||0;
+    let B=parseFloat(rgbB.value)||0;
+
+    let max=parseFloat(maxValue.value)||1;
+
+    let r=R/255*max;
+    let g=G/255*max;
+    let b=B/255*max;
+
+    valR.textContent=r;
+    valG.textContent=g;
+    valB.textContent=b;
+
+    preview2.style.backgroundColor=
+        `rgb(${R},${G},${B})`;
+
+    let hr=Math.round(R).toString(16).padStart(2,"0");
+    let hg=Math.round(G).toString(16).padStart(2,"0");
+    let hb=Math.round(B).toString(16).padStart(2,"0");
+
+    picker.value="#"+hr+hg+hb;
+
+    hex2.textContent=
+        floatToHex(r)+"   "+
+        floatToHex(g)+"   "+
+        floatToHex(b);
+
+}
+
+function pickerChanged(){
+
+    let hex=picker.value;
+
+    rgbR.value=parseInt(hex.substr(1,2),16);
+    rgbG.value=parseInt(hex.substr(3,2),16);
+    rgbB.value=parseInt(hex.substr(5,2),16);
+
+    updateReverse();
+
+}
+
+[
+inR,inG,inB
+].forEach(x=>x.addEventListener("input",updateForward));
+
+[
+rgbR,rgbG,rgbB,maxValue
+].forEach(x=>x.addEventListener("input",updateReverse));
+
+picker.addEventListener("input",pickerChanged);
+
+updateForward();
+updateReverse();
+
+</script>
+
+</body>
+</html>
